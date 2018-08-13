@@ -54,12 +54,7 @@ class VideoD:
         self.channel_title = search_item['snippet']['channelTitle']
         self.title = search_item['snippet']['title']
         str_date = search_item['snippet']['publishedAt']
-        try:
-            self.date_published = datetime.datetime.strptime(str_date, '%Y-%m-%dT%H:%M:%S.000Z')
-        except TypeError as e_te:
-            self.logger.error("Error setting self.date_published = datetime.datetime.strptime(str_date, '%Y-%m-%dT%H:%M:%S.000Z'!", exc_info=e_te)
-            self.date_published = None
-            pass
+        self.date_published = datetime.datetime.strptime(str_date, '%Y-%m-%dT%H:%M:%S.000Z')
         self.description = search_item['snippet']['description']
         self.channel_id = search_item['snippet']['channelId']
 
