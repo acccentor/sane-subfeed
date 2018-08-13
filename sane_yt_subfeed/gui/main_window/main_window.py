@@ -6,7 +6,7 @@ from subprocess import check_output
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, QMenu, QStackedWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, QMenu, QStackedWidget, QMessageBox
 
 # Project internal libs
 from googleapiclient.errors import HttpError
@@ -32,6 +32,8 @@ from sane_yt_subfeed.gui.views.list_tiled_view import ListTiledView
 from sane_yt_subfeed.gui.views.subscriptions_view import SubscriptionsView
 from sane_yt_subfeed.history_handler import get_history
 from sane_yt_subfeed.log_handler import create_logger
+
+from sane_yt_subfeed.youtube.update_videos import refresh_uploads_thread_exceptions
 
 
 # Constants
@@ -136,6 +138,8 @@ class MainWindow(QMainWindow):
         self.add_submenu('&Function', 'Toggle ascending date', self.toggle_ascending_sort,
                          tooltip='Toggles the ascending date config option, and does a manual re-grab',
                          icon='database.png', shortcut='Ctrl+A')
+
+        self.add_submenu('&Function', 'Check for dead channels', self.check_for_dead_channels_dialog)
 
         # get_single_video = self.add_submenu('&Function', 'Get video', self.get_single_video,
         #                                     tooltip='Fetch video by URL')
@@ -389,10 +393,9 @@ class MainWindow(QMainWindow):
         Refresh the subscription feed
         :return:
         """
-        try:
-            self.main_model.main_window_listener.refreshVideos.emit(LISTENER_SIGNAL_NORMAL_REFRESH)
-        except HttpError as e_http_error:
-            self.logger.exception(e_http_error)
+        self.main_model.main_window_listener.refreshVideos.emit(LISTENER_SIGNAL_NORMAL_REFRESH)
+        # FIXME: Check for changes in refresh_uploads_thread_exceptions somehow
+        # maybe this? https://stackoverflow.com/questions/41865287/pyqt-event-when-a-variable-value-is-changed
 
     def refresh_list_deep(self):
         """
@@ -475,6 +478,35 @@ class MainWindow(QMainWindow):
         history_dialog = TextViewDialog(self, history)
         history_dialog.setWindowTitle("Usage history")
         history_dialog.show()
+
+    def check_for_dead_channels_dialog(self):
+        """
+        Checks if a channel in subscriptions has ceased to exist
+        :return:
+        """
+        popup_dialog = QMessageBox()
+        if len(refresh_uploads_thread_exceptions) > 0:
+            popup_dialog.setIcon(QMessageBox.Critical)
+            if len(refresh_uploads_thread_exceptions) == 1:
+                popup_dialog.setText("A channel you are subscribed to has ceased to exist!")
+            else:
+                popup_dialog.setText("Channels you are subscribed to have ceased to exist!")
+            detailed_text = ""
+            for exc in refresh_uploads_thread_exceptions:
+                self.logger.debug(exc.__dict__)
+                detailed_text += str(exc) + "\n\n"
+            popup_dialog.setDetailedText(detailed_text)
+            popup_dialog.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+            popup_dialog.buttonClicked.connect(self.check_for_dead_channels)
+        else:
+            popup_dialog.setText("No dead channels detected \o/")
+            popup_dialog.setStandardButtons(QMessageBox.Ok)
+        popup_dialog.exec_()    # FIXME: Should be .show() but it keeps dying to garbage collector
+
+    def check_for_dead_channels(self, button):
+        if button == QMessageBox.Ok:    # FIXME: Doesn't trigger, bad if check
+            self.logger.debug("DUUMY: refresh_subs()")
+            # self.refresh_subs()
 
     # Unused functions
     def context_menu_event(self, event):  # TODO: Unused, planned usage in future

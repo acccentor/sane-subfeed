@@ -15,6 +15,8 @@ YOUTUBE_PARM_VIDEO = "watch?v="
 YOUTUBE_PARM_PLIST = "playlist?list ="
 YT_VIDEO_URL = YOUTUBE_URL + YOUTUBE_PARM_VIDEO
 
+refresh_uploads_thread_exceptions = []
+
 # FIXME: module level logger not suggested: https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/
 logger = create_logger(__name__)
 
@@ -71,7 +73,9 @@ def refresh_uploads(progress_bar_listener=None, add_to_max=0,
         try:
             t.join()
         except HttpError as e_http_error:
-            raise e_http_error  # Handle exceptions in parent call
+            # Store exception to list, because raise breaks func join and return
+            refresh_uploads_thread_exceptions.append(e_http_error)
+            pass
 
     return sorted(videos, key=lambda video: video.date_published, reverse=True)
 

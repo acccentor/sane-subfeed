@@ -6,7 +6,7 @@ from sqlalchemy import asc, desc
 
 from sane_yt_subfeed.config_handler import read_config
 from sane_yt_subfeed.controller.listeners import GridViewListener, MainWindowListener, YtDirListener, \
-    LISTENER_SIGNAL_NORMAL_REFRESH, ProgressBar
+    LISTENER_SIGNAL_NORMAL_REFRESH, ProgressBar, ExceptionListener
 from sane_yt_subfeed.controller.database_listener import DatabaseListener
 from sane_yt_subfeed.database.read_operations import get_newest_stored_videos, refresh_and_get_newest_videos, \
     get_best_downloaded_videos
@@ -60,6 +60,12 @@ class MainModel:
         self.yt_dir_thread.setObjectName('yt_dir_thread')
         self.yt_dir_listener.moveToThread(self.yt_dir_thread)
         self.yt_dir_thread.start()
+
+        self.exception_listener = ExceptionListener(self)
+        self.exception_thread = QThread()
+        self.exception_thread.setObjectName('exc_thread')
+        self.exception_listener.moveToThread(self.exception_thread)
+        self.exception_thread.start()
 
     def hide_video_item(self, video):
         self.logger.debug("Hiding video item: {}".format(video))
@@ -145,3 +151,6 @@ class MainModel:
         else:
             update_sort += (desc(Video.date_downloaded), desc(Video.date_published))
         return update_sort
+
+    def exception_caught(self):
+        self.exception_listener.sendException.emit()
