@@ -1,6 +1,7 @@
 import datetime
 
 import sane_yt_subfeed.database.video as video_file
+from sane_yt_subfeed import create_logger
 from sane_yt_subfeed.config_handler import read_config
 from sane_yt_subfeed.settings import YOUTUBE_URL_BASE, YOUTUBE_URL_PART_VIDEO
 
@@ -24,6 +25,7 @@ class VideoD:
         Creates a Video object from a YouTube playlist_item
         :param search_item:
         """
+        self.logger = create_logger(__name__)
         self.grab_methods = []
         self.vid_path = ""
         if grab_methods is None:
@@ -52,7 +54,12 @@ class VideoD:
         self.channel_title = search_item['snippet']['channelTitle']
         self.title = search_item['snippet']['title']
         str_date = search_item['snippet']['publishedAt']
-        self.date_published = datetime.datetime.strptime(str_date, '%Y-%m-%dT%H:%M:%S.000Z')
+        try:
+            self.date_published = datetime.datetime.strptime(str_date, '%Y-%m-%dT%H:%M:%S.000Z')
+        except TypeError as e_te:
+            self.logger.error("Error setting self.date_published = datetime.datetime.strptime(str_date, '%Y-%m-%dT%H:%M:%S.000Z'!", exc_info=e_te)
+            self.date_published = None
+            pass
         self.description = search_item['snippet']['description']
         self.channel_id = search_item['snippet']['channelId']
 

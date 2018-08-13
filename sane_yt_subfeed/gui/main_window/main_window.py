@@ -9,6 +9,8 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, QMenu, QStackedWidget
 
 # Project internal libs
+from googleapiclient.errors import HttpError
+
 from sane_yt_subfeed.absolute_paths import ICO_PATH, VERSION_PATH
 from sane_yt_subfeed.config_handler import read_config, set_config
 from sane_yt_subfeed.controller.listeners import LISTENER_SIGNAL_NORMAL_REFRESH, LISTENER_SIGNAL_DEEP_REFRESH
@@ -387,7 +389,10 @@ class MainWindow(QMainWindow):
         Refresh the subscription feed
         :return:
         """
-        self.main_model.main_window_listener.refreshVideos.emit(LISTENER_SIGNAL_NORMAL_REFRESH)
+        try:
+            self.main_model.main_window_listener.refreshVideos.emit(LISTENER_SIGNAL_NORMAL_REFRESH)
+        except HttpError as e_http_error:
+            self.logger.exception(e_http_error)
 
     def refresh_list_deep(self):
         """

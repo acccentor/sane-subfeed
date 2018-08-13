@@ -1,3 +1,5 @@
+from googleapiclient.errors import HttpError
+
 from sane_yt_subfeed.config_handler import read_config
 from sane_yt_subfeed.generate_keys import GenerateKeys
 from sane_yt_subfeed.pickle_handler import load_batch_build_key, dump_batch_build_key
@@ -40,6 +42,7 @@ def refresh_uploads(progress_bar_listener=None, add_to_max=0,
     channels_limit = read_config('Debug', 'channels_limit')
     for channel, youtube in tqdm(zip(subscriptions, youtube_keys), desc="Creating video update threads",
                                  disable=read_config('Debug', 'disable_tqdm')):
+
         thread = GetUploadsThread(thread_increment, youtube, channel.id, channel.playlist_id, videos, search_pages[0],
                                   search_pages[1], deep_search=deep_search)
         thread_list.append(thread)
@@ -56,6 +59,7 @@ def refresh_uploads(progress_bar_listener=None, add_to_max=0,
     for t in tqdm(thread_list, desc="Starting video update threads", disable=read_config('Debug', 'disable_tqdm')):
         if progress_bar_listener:
             progress_bar_listener.updateProgress.emit()
+
         t.start()
 
     if progress_bar_listener:
@@ -64,7 +68,10 @@ def refresh_uploads(progress_bar_listener=None, add_to_max=0,
     for t in tqdm(thread_list, desc="Waiting for video update threads", disable=read_config('Debug', 'disable_tqdm')):
         if progress_bar_listener:
             progress_bar_listener.updateProgress.emit()
-        t.join()
+        try:
+            t.join()
+        except HttpError as e_http_error:
+            raise e_http_error  # Handle exceptions in parent call
 
     return sorted(videos, key=lambda video: video.date_published, reverse=True)
 

@@ -1,6 +1,8 @@
 import threading
 import timeit
 
+from googleapiclient.errors import HttpError
+
 from sane_yt_subfeed.config_handler import read_config
 from sane_yt_subfeed.database.models import Channel
 from sane_yt_subfeed.database.orm import db_session
@@ -31,6 +33,8 @@ class GetUploadsThread(threading.Thread):
         self.channel_id = channel_id
         self.playlist_id = playlist_id
         self.deep_search = deep_search
+        self.exc = None
+        self.ret = None
 
     # TODO: Handle failed requests
     def run(self):
@@ -38,7 +42,8 @@ class GetUploadsThread(threading.Thread):
         Override threading.Thread.run() with its own code
         :return:
         """
-
+        # try:
+        #     self.ret = self._target(*self._args, **self._kwargs)
         # youtube = youtube_auth_keys()
 
         # self.videos = get_channel_uploads(self.youtube, channel_id)
@@ -78,7 +83,24 @@ class GetUploadsThread(threading.Thread):
             else:
                 list_uploaded_videos_search(self.youtube, self.channel_id, self.videos, self.search_pages)
 
+        # except HttpError as e_http_error:
+        #     self.exc = e_http_error   # Save the exception details, but don't rethrow.
+        #     pass
+
         self.job_done = True
+
+    # def join(self, **kwargs):
+    #     """
+    #     Override Threading join() with one that handles exceptions
+    #     :return:
+    #     """
+    #     super(GetUploadsThread, self).join()
+    #     # threading.Thread.join(self)
+    #     if self.exc:
+    #         self.logger.error("An exception occurred in thread: {}".format(self.thread_id), exc_info=self.exc)
+    #         raise self.exc
+    #     return self.ret
+
 
     @staticmethod
     def merge_same_videos_in_list(videos):
