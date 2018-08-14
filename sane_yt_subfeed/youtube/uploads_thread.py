@@ -66,7 +66,7 @@ class GetUploadsThread(threading.Thread):
                 if test.test_miss < miss or test.test_pages > pages:
                     db_session.remove()
                     list_uploaded_videos_search(self.youtube, self.channel_id, search_videos, self.search_pages)
-                    # break
+                    break
             db_session.remove()
             list_uploaded_videos(self.youtube, list_videos, self.playlist_id,
                                  min(pages + extra_pages, list_pages + extra_pages))
