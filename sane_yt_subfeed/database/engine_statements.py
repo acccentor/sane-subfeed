@@ -49,15 +49,7 @@ def update_thumbnails_path_stmt():
 
 def update_video_stmt():
     return Video.__table__.update().where(Video.video_id == bindparam('_video_id')).values({
-        'thumbnail_path': bindparam('thumbnail_path'),
-        'url_video': bindparam('url_video'),
-        'thumbnails': bindparam('thumbnails'),
-        'downloaded': bindparam('downloaded'),
-        'search_item': bindparam('search_item'),
-        'discarded': bindparam('discarded'),
-        'vid_path': bindparam('vid_path'),
-        'watched': bindparam('watched'),
-        'watch_prio': bindparam('watch_prio'),
+        'description': bindparam('description')
     })
 
 def update_channel_from_remote(channel):

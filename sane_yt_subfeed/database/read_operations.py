@@ -137,7 +137,7 @@ def refresh_and_get_newest_videos(limit, filter_downloaded=True, filter_discarde
     else:
         return_list = check_for_new(return_list)
 
-    UpdateVideosThread(videos).start()
+    UpdateVideosThread(videos, update_existing=True).start()
     if len(return_list) > 0:
         download_thumbnails_threaded(return_list, progress_listener=progress_listener)
         UpdateVideosThumbnailsThreaded(return_list).start()
